@@ -1,160 +1,89 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Camera = workspace.CurrentCamera
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GohkenUI"
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- ===== GUI หลัก =====
-local mainGui = Instance.new("ScreenGui", PlayerGui)
-mainGui.Name = "SpectateESP_UI"
-mainGui.ResetOnSpawn = false
+-- เฟรมหลัก (Main Frame)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 260, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -130, 0.5, -190)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18) -- ดำเข้มเกือบสนิท
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
 
--- ปุ่มเปิด/ปิดเมนูหลัก
-local mainToggle = Instance.new("TextButton", mainGui)
-mainToggle.Size = UDim2.new(0, 160, 0, 40)
-mainToggle.Position = UDim2.new(0, 20, 0, 20)
-mainToggle.BackgroundColor3 = Color3.fromRGB(30,30,40)
-mainToggle.TextColor3 = Color3.new(1,1,1)
-mainToggle.Font = Enum.Font.GothamBold
-mainToggle.TextScaled = true
-mainToggle.Text = "🔧 แสดงเมนู"
-mainToggle.Draggable = true
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 4)
+Corner.Parent = MainFrame
 
--- เฟรมเมนู
-local frame = Instance.new("Frame", mainGui)
-frame.Size = UDim2.new(0, 240, 0, 400)
-frame.Position = UDim2.new(0, 20, 0, 70)
-frame.BackgroundColor3 = Color3.fromRGB(40,40,50)
-frame.Visible = false
+-- ชื่อเมนู (GOHKEN)
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -20, 0, 40)
+Title.Position = UDim2.new(0, 15, 0, 5)
+Title.BackgroundTransparency = 1
+Title.Text = "GOHKEN"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 20
+Title.Parent = MainFrame
 
--- กดพับ/ขยายเมนู
-mainToggle.MouseButton1Click:Connect(function()
-    frame.Visible = not frame.Visible
-    mainToggle.Text = frame.Visible and "❌ ซ่อนเมนู" or "🔧 แสดงเมนู"
-end)
+-- ปุ่มเมนูหลัก (Main Tab)
+local MainButton = Instance.new("TextButton")
+MainButton.Size = UDim2.new(1, -30, 0, 38)
+MainButton.Position = UDim2.new(0, 15, 0, 50)
+MainButton.BackgroundColor3 = Color3.fromRGB(235, 65, 30) -- สีส้มแดงสด
+MainButton.Text = "Main"
+MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MainButton.Font = Enum.Font.GothamMedium
+MainButton.TextSize = 15
+MainButton.AutoButtonColor = true
+MainButton.Parent = MainFrame
 
--- ===== ESP =====
-getgenv().ESPEnabled = false
-local ESPColor = Color3.fromRGB(0, 255, 0)
+local BtnCorner = Instance.new("UICorner")
+BtnCorner.CornerRadius = UDim.new(0, 6)
+BtnCorner.Parent = MainButton
 
-local toggleESP = Instance.new("TextButton", frame)
-toggleESP.Size = UDim2.new(0, 200, 0, 40)
-toggleESP.Position = UDim2.new(0, 20, 0, 10)
-toggleESP.BackgroundColor3 = Color3.fromRGB(60,60,80)
-toggleESP.TextColor3 = Color3.new(1,1,1)
-toggleESP.Font = Enum.Font.GothamBold
-toggleESP.TextScaled = true
-toggleESP.Text = "🔍 เปิด ESP"
-
-toggleESP.MouseButton1Click:Connect(function()
-    getgenv().ESPEnabled = not getgenv().ESPEnabled
-    toggleESP.Text = getgenv().ESPEnabled and "❌ ปิด ESP" or "🔍 เปิด ESP"
-end)
-
--- สร้าง ESP
-local function createESP(player)
-    if player == LocalPlayer then return end
-    local function onChar(char)
-        local head = char:WaitForChild("Head", 10)
-        if not head then return end
-        local tag = Instance.new("BillboardGui")
-        tag.Name = "ESP_Tag"
-        tag.Adornee = head
-        tag.Size = UDim2.new(0, 120, 0, 25)
-        tag.StudsOffset = Vector3.new(0, 2.7, 0)
-        tag.AlwaysOnTop = true
-        tag.Parent = char
-
-        local label = Instance.new("TextLabel", tag)
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.TextColor3 = ESPColor
-        label.TextStrokeTransparency = 0.4
-        label.TextScaled = true
-        label.Font = Enum.Font.GothamSemibold
-        label.Text = player.Name
-
-        RunService.RenderStepped:Connect(function()
-            if getgenv().ESPEnabled and char.Parent then
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if hrp and myHRP then
-                    local dist = (hrp.Position - myHRP.Position).Magnitude
-                    label.Text = player.Name .. " [" .. math.floor(dist) .. "m]"
-                    tag.Enabled = true
-                end
-            else
-                tag.Enabled = false
-            end
-        end)
-    end
-
-    player.CharacterAdded:Connect(onChar)
-    if player.Character then onChar(player.Character) end
+--- ส่วนของหัวข้อ Settings ---
+local function CreateSectionLabel(text, posY)
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -30, 0, 30)
+    Label.Position = UDim2.new(0, 15, 0, posY)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Font = Enum.Font.GothamMedium
+    Label.TextSize = 14
+    Label.Parent = MainFrame
+    return Label
 end
 
-for _, p in pairs(Players:GetPlayers()) do createESP(p) end
-Players.PlayerAdded:Connect(createESP)
+CreateSectionLabel("Aimbot Settings", 100)
 
--- ===== Spectate =====
-local spectating = false
-local dropdown = Instance.new("ScrollingFrame", frame)
-dropdown.Size = UDim2.new(0, 200, 0, 260)
-dropdown.Position = UDim2.new(0, 20, 0, 60)
-dropdown.BackgroundColor3 = Color3.fromRGB(50,50,70)
-dropdown.CanvasSize = UDim2.new(0, 0, 1, 0)
-dropdown.Visible = true
+-- ตัวอย่างปุ่มเปิด/ปิด (Toggle Style)
+local EnableToggle = Instance.new("TextButton")
+EnableToggle.Size = UDim2.new(1, -30, 0, 30)
+EnableToggle.Position = UDim2.new(0, 15, 0, 135)
+EnableToggle.BackgroundTransparency = 1
+EnableToggle.Text = "     Enable"
+EnableToggle.TextColor3 = Color3.fromRGB(200, 200, 200)
+EnableToggle.TextXAlignment = Enum.TextXAlignment.Left
+EnableToggle.Font = Enum.Font.Gotham
+EnableToggle.TextSize = 14
+EnableToggle.Parent = MainFrame
 
-local layout = Instance.new("UIListLayout", dropdown)
-layout.SortOrder = Enum.SortOrder.Name
+-- วงกลม Toggle ข้างหน้า
+local Circle = Instance.new("Frame")
+Circle.Size = UDim2.new(0, 18, 0, 18)
+Circle.Position = UDim2.new(0, 0, 0.5, -9)
+Circle.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+Circle.Parent = EnableToggle
 
-local stopBtn = Instance.new("TextButton", frame)
-stopBtn.Size = UDim2.new(0,200,0,40)
-stopBtn.Position = UDim2.new(0,20,0,330)
-stopBtn.BackgroundColor3 = Color3.fromRGB(80,20,20)
-stopBtn.TextColor3 = Color3.new(1,1,1)
-stopBtn.Font = Enum.Font.GothamBold
-stopBtn.TextScaled = true
-stopBtn.Text = "✖ หยุดดู"
-stopBtn.Visible = false
+local CircleStroke = Instance.new("UIStroke")
+CircleStroke.Thickness = 2
+CircleStroke.Color = Color3.fromRGB(235, 65, 30)
+CircleStroke.Parent = Circle
 
-local function refreshDropdown()
-    for _, child in pairs(dropdown:GetChildren()) do
-        if child:IsA("TextButton") then child:Destroy() end
-    end
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            local b = Instance.new("TextButton", dropdown)
-            b.Size = UDim2.new(1, -10, 0, 30)
-            b.Position = UDim2.new(0, 5, 0, 0)
-            b.BackgroundColor3 = Color3.fromRGB(70,70,90)
-            b.TextColor3 = Color3.new(1,1,1)
-            b.Font = Enum.Font.Gotham
-            b.TextScaled = true
-            b.Text = plr.Name
-            b.MouseButton1Click:Connect(function()
-                spectating = true
-                stopBtn.Visible = true
-                Camera.CameraSubject = plr.Character and plr.Character:FindFirstChild("Humanoid") or Camera.CameraSubject
-            end)
-        end
-    end
-end
-
-stopBtn.MouseButton1Click:Connect(function()
-    spectating = false
-    stopBtn.Visible = false
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        Camera.CameraSubject = LocalPlayer.Character.Humanoid
-    end
-end)
-
-Players.PlayerAdded:Connect(function()
-    refreshDropdown()
-end)
-Players.PlayerRemoving:Connect(function()
-    refreshDropdown()
-end)
-
--- เริ่มต้น
-refreshDropdown()
+local CircleCorner = Instance.new("UICorner")
+CircleCorner.CornerRadius = UDim.new(1, 0)
+CircleCorner.Parent = Circle
