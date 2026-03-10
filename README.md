@@ -1,89 +1,95 @@
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GohkenUI"
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+------- สคริปบิน
 
--- เฟรมหลัก (Main Frame)
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 260, 0, 380)
-MainFrame.Position = UDim2.new(0.5, -130, 0.5, -190)
-MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18) -- ดำเข้มเกือบสนิท
-MainFrame.BorderSizePixel = 0
-MainFrame.Parent = ScreenGui
 
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 4)
-Corner.Parent = MainFrame
 
--- ชื่อเมนู (GOHKEN)
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -20, 0, 40)
-Title.Position = UDim2.new(0, 15, 0, 5)
-Title.BackgroundTransparency = 1
-Title.Text = "GOHKEN"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 20
-Title.Parent = MainFrame
 
--- ปุ่มเมนูหลัก (Main Tab)
-local MainButton = Instance.new("TextButton")
-MainButton.Size = UDim2.new(1, -30, 0, 38)
-MainButton.Position = UDim2.new(0, 15, 0, 50)
-MainButton.BackgroundColor3 = Color3.fromRGB(235, 65, 30) -- สีส้มแดงสด
-MainButton.Text = "Main"
-MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-MainButton.Font = Enum.Font.GothamMedium
-MainButton.TextSize = 15
-MainButton.AutoButtonColor = true
-MainButton.Parent = MainFrame
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+local camera = workspace.CurrentCamera
 
-local BtnCorner = Instance.new("UICorner")
-BtnCorner.CornerRadius = UDim.new(0, 6)
-BtnCorner.Parent = MainButton
+-- ตัวแปรควบคุม
+local flying = false
+local speed = 100
+local bv, bg
 
---- ส่วนของหัวข้อ Settings ---
-local function CreateSectionLabel(text, posY)
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(1, -30, 0, 30)
-    Label.Position = UDim2.new(0, 15, 0, posY)
-    Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.TextColor3 = Color3.fromRGB(220, 220, 220)
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Font = Enum.Font.GothamMedium
-    Label.TextSize = 14
-    Label.Parent = MainFrame
-    return Label
+-- === [ สร้าง UI ] ===
+local sg = Instance.new("ScreenGui", player.PlayerGui)
+sg.Name = "FlyGui"
+
+local frame = Instance.new("Frame", sg)
+frame.Size = UDim2.new(0, 150, 0, 100)
+frame.Position = UDim2.new(0, 20, 0.5, -50)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 2
+frame.Active = true
+frame.Draggable = true -- ลากย้ายที่ได้
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 25)
+title.Text = "บิน"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+
+-- ปุ่ม เปิด/ปิด
+local toggleBtn = Instance.new("TextButton", frame)
+toggleBtn.Size = UDim2.new(0.9, 0, 0, 30)
+toggleBtn.Position = UDim2.new(0.05, 0, 0.3, 0)
+toggleBtn.Text = "Fly: OFF"
+toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+toggleBtn.TextColor3 = Color3.new(1, 1, 1)
+
+-- ช่องปรับความเร็ว
+local speedInput = Instance.new("TextBox", frame)
+speedInput.Size = UDim2.new(0.9, 0, 0, 25)
+speedInput.Position = UDim2.new(0.05, 0, 0.65, 0)
+speedInput.PlaceholderText = "Speed (100)"
+speedInput.Text = "100"
+speedInput.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+
+-- === [ ระบบการบิน ] ===
+local function toggleFly()
+    flying = not flying
+    character.Humanoid.PlatformStand = flying
+    if flying then
+        toggleBtn.Text = "Fly: ON"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        bv = Instance.new("BodyVelocity", root)
+        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bg = Instance.new("BodyGyro", root)
+        bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.P = 90000
+    else
+        toggleBtn.Text = "Fly: OFF"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        if bv then bv:Destroy() end
+        if bg then bg:Destroy() end
+        character.Humanoid.PlatformStand = false
+    end
 end
 
-CreateSectionLabel("Aimbot Settings", 100)
+-- อัปเดตความเร็วจาก TextBox
+speedInput.FocusLost:Connect(function()
+    speed = tonumber(speedInput.Text) or 100
+end)
 
--- ตัวอย่างปุ่มเปิด/ปิด (Toggle Style)
-local EnableToggle = Instance.new("TextButton")
-EnableToggle.Size = UDim2.new(1, -30, 0, 30)
-EnableToggle.Position = UDim2.new(0, 15, 0, 135)
-EnableToggle.BackgroundTransparency = 1
-EnableToggle.Text = "     Enable"
-EnableToggle.TextColor3 = Color3.fromRGB(200, 200, 200)
-EnableToggle.TextXAlignment = Enum.TextXAlignment.Left
-EnableToggle.Font = Enum.Font.Gotham
-EnableToggle.TextSize = 14
-EnableToggle.Parent = MainFrame
+toggleBtn.MouseButton1Click:Connect(toggleFly)
 
--- วงกลม Toggle ข้างหน้า
-local Circle = Instance.new("Frame")
-Circle.Size = UDim2.new(0, 18, 0, 18)
-Circle.Position = UDim2.new(0, 0, 0.5, -9)
-Circle.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-Circle.Parent = EnableToggle
+-- ควบคุมทิศทาง
+RunService.RenderStepped:Connect(function()
+    if flying and root then
+        local direction = Vector3.new(0, 0, 0)
+        if UIS:IsKeyDown(Enum.KeyCode.W) then direction = direction + camera.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then direction = direction - camera.CFrame.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then direction = direction - camera.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then direction = direction + camera.CFrame.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then direction = direction - Vector3.new(0, 1, 0) end
 
-local CircleStroke = Instance.new("UIStroke")
-CircleStroke.Thickness = 2
-CircleStroke.Color = Color3.fromRGB(235, 65, 30)
-CircleStroke.Parent = Circle
-
-local CircleCorner = Instance.new("UICorner")
-CircleCorner.CornerRadius = UDim.new(1, 0)
-CircleCorner.Parent = Circle
+        bg.CFrame = camera.CFrame
+        bv.Velocity = direction * speed
+    end
+end)
